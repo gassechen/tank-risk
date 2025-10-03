@@ -1,173 +1,71 @@
-#+TITLE: Sistema Neurosimbólico para la Integridad de Tanques de Almacenamiento
-#+AUTHOR: Gaston Pepe
-#+DATE: 2025-04-17
-#+OPTIONS: toc:nil num:nil
-#+STARTUP: overview
+Sistema Experto Híbrido: Evaluación de Integridad de Tanques (Tank-Integrity AI)
+🎯 Descripción del Proyecto
+Tank-Integrity AI es un Sistema Experto Híbrido diseñado para la toma de decisiones en tiempo real sobre la integridad mecánica de tanques de almacenamiento y recipientes a presión en la industria de hidrocarburos y química. Este sistema combina la precisión de modelos de Machine Learning (ML) con la auditabilidad y rigurosidad de la lógica basada en reglas (Sistemas Expertos/IA Simbólica), implementando un mecanismo de "Rule Gap" (Vacío de Conocimiento) que garantiza la cobertura total de casos.
 
-* Sistema Neurosimbólico para la Integridad de Tanques de Almacenamiento en la Industria del Petróleo
+El Problema que Resuelve
+Los sistemas de inspección tradicionales a menudo fallan en escenarios de baja confianza o datos contradictorios (casos de borde), donde la recomendación debe ir más allá de las normas estándar (API 653, API 510). Este proyecto asegura que cada caso de incertidumbre detectado por los modelos de ML sea resuelto mediante la generación dinámica de conocimiento utilizando un Large Language Model (LLM) como componente de inferencia de respaldo.
 
-En la industria del petróleo, garantizar la *integridad mecánica* de los tanques de almacenamiento es crucial para prevenir fugas, cumplir normativas como *API 653*, y optimizar costos operativos. Este documento presenta un sistema *neurosimbólico* que combina inteligencia artificial y razonamiento lógico para evaluar riesgos de corrosión en tanques y recomendar acciones específicas basadas en estándares de la industria.
+🏗️ Arquitectura Neurosimbólica
+El proyecto está diseñado bajo una arquitectura de "cerebro dual" que orquesta tres componentes principales a través de Common Lisp/LISA:
 
-** ¿Qué es un sistema neurosimbólico?
+1. Núcleo Simbólico (Motor de Reglas LISA)
+Tecnología: Common Lisp (CL) utilizando el shell de sistemas expertos LISA.
 
-Un sistema neurosimbólico integra:
+Función: Almacena y ejecuta las reglas de decisión de ingeniería basadas en normas (API 653/510, ASME). Es el componente de auditoría y decisión primaria.
 
-- *Redes neuronales*: Para aprender patrones a partir de datos operativos y predecir riesgos.
-- *Razonamiento simbólico*: Para aplicar reglas lógicas alineadas con normativas como API 653.
+2. Componentes Neuro (Modelos de Machine Learning)
+Tecnología: Servidores Microservice (Python/Flask) que exponen endpoints (Puertos 5000, 5001).
 
-Este enfoque combina lo mejor de ambos mundos: la capacidad de aprendizaje automático con la interpretabilidad y formalismo de los sistemas basados en reglas.
+Función: Proporcionan hechos de entrada al sistema (LISA):
 
-** Caso práctico: Evaluación de riesgos en tanques
+Modelo de Riesgo (Risk Model): Predice la categoría de riesgo ("alto", "medio", "bajo") y, crucialmente, la Confianza (?c) de esa predicción.
 
-Este prototipo:
+Modelo de Corrosión (Corrosion Model): Predice la agresividad de la corrosión.
 
-1. *Predice riesgos de corrosión* usando un modelo de aprendizaje automático en Python.
-2. *Toma decisiones* con reglas en LISA (Common Lisp), alineadas con API 653.
-3. *Integra ambos componentes* mediante py4cl2 para comunicación en tiempo real.
+3. Mecanismo de Inferencia Híbrida (El LLM)
+Tecnología: Servidor Microservice que aloja un Large Language Model (LLM) configurado con ingeniería de prompts.
 
-* Ejemplo de salida del software
+Función: Es el mecanismo de fallback. Solo se activa si el motor LISA no puede asertar un CONCLUSION-FOUND debido a que la confianza de los modelos de ML es demasiado baja (el Rule Gap). El LLM genera y devuelve una nueva regla LISA, cerrando el vacío.
 
-Si ingresamos los siguientes datos:
-| Espesor de pared (mm) | Temperatura interna (°C) | Años en servicio | Tipo de fluido (ligero/pesado) | Presión interna (psi) | Recubrimiento protector (sí/no) | Protección catódica (sí/no) |
-|------------------------|---------------------------|------------------|---------------------------------|------------------------|----------------------------------|------------------------------|
-|                   8.0 |                       60 |               10 |                              1  |                    20 |                                0 |                            0 |
+⚙️ Características Técnicas y Funcionalidad
+Flujo Operacional (Inferencia Híbrida)
+Activación: El frontend (LISA) recibe los inputs del tanque (evaluar-tanque ...).
 
-Resultado:
+Consulta ML: LISA consulta los Modelos de ML para obtener los hechos TANK-RISK y CORROSION-FACT.
 
-*"Riesgo medio. Programar inspección visual y ultrasónica en 6 meses (API 653, Anexo F - RBI)."*
+Evaluación Simbólica: LISA ejecuta sus reglas de ingeniería (?c>0.6).
 
-* Implementación del prototipo
+Detección de Vacío (Rule Gap):
 
-** Componente neuronal (Python)
+Si Confianza ML >0.6: Una regla estándar se dispara, aserta CONCLUSION-FOUND y se finaliza.
 
-El modelo utiliza un clasificador Random Forest para predecir el riesgo de corrosión (bajo, medio, alto) a partir de:
+Si Confianza ML ≤0.6 (Duda): El motor detecta la falta del hecho CONCLUSION-FOUND y suspende la ejecución.
 
-- Espesor de pared (mm)
-- Temperatura interna (°C)
-- Años en servicio
-- Tipo de fluido (ligero/pesado)
-- Presión interna (psi)
-- Recubrimiento protector (sí/no)
-- Protección catódica (sí/no)
+Generación de Conocimiento: Se llama al LLM con los hechos y inputs del tanque. El LLM infiere una solución (acción + norma) y genera una nueva defrule LISA.
 
-#+BEGIN_SRC python
-from sklearn.ensemble import RandomForestClassifier
-import numpy as np
+Actualización: La nueva regla se integra en la base de conocimientos, resolviendo permanentemente el punto ciego para futuras consultas.
 
-X = np.array([
-    [10.0, 50, 5, 0, 15, 1, 1], [8.0, 60, 10, 1, 20, 0, 0],
-    [12.0, 40, 3, 0, 10, 1, 1], [7.0, 70, 15, 1, 25, 0, 0],
-    [9.0, 55, 8, 0, 18, 1, 0], [6.0, 65, 12, 1, 22, 0, 0],
-    [11.0, 45, 4, 0, 12, 1, 1], [5.0, 75, 20, 1, 30, 0, 0],
-    [9.5, 50, 7, 0, 15, 1, 1], [7.5, 62, 13, 1, 20, 0, 1],
-    [10.5, 48, 6, 0, 14, 1, 0], [6.5, 68, 18, 1, 28, 0, 0]
-])
-y = np.array([0, 1, 0, 2, 1, 2, 0, 2, 0, 1, 0, 2])  # 0=low, 1=medium, 2=high
+Reglas Clave Generadas (Ejemplos de Vacíos Encontrados)
+El sistema ha demostrado capacidad para generar reglas para escenarios complejos y de baja confianza, como:
 
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X, y)
+API-580-BAJA-CONF: Riesgo Bajo, pero Confianza extremadamente baja (?c<0.4), requiriendo validación de datos (API 580).
 
-risk_map = {0: "low", 1: "medium", 2: "high"}
+API-510-ALTO-RIESGO-BAJA-CONF: Riesgo Alto, pero Confianza dudosa (?c=0.52), requiriendo re-inspección inmediata y recalcular el riesgo (API 510/580).
 
-def predict_risk(thickness, temperature, years, fluid_type, pressure, coating, cathodic_protection):
-    X_new = np.array([[thickness, temperature, years, fluid_type, pressure, coating, cathodic_protection]])
-    risk_level = model.predict(X_new)[0]
-    confidence = model.predict_proba(X_new).max()
-    return {
-        "risk": risk_map[risk_level],
-        "confidence": float(confidence),
-        "thickness": float(thickness)
-    }
-#+END_SRC
+API-581-SCC-ALTO: Alto Riesgo por Condición Metalúrgica (Cloruros/Temperatura), requiriendo técnicas avanzadas de NDT para agrietamiento (API 581).
 
-** Componente simbólico (Common Lisp con LISA)
+🛠️ Tecnologías Utilizadas
+Motor de Reglas: LISA (Lisp-based Intelligent Software Agent)
 
-Las reglas en LISA evalúan el riesgo predicho y el espesor de pared, recomendando acciones específicas según *API 653*:
+Lenguaje Principal: Common Lisp
 
-#+BEGIN_SRC lisp
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (find-package "TANK-INTEGRITY")
-    (defpackage "TANK-INTEGRITY"
-      (:use "COMMON-LISP" "LISA")
-      (:export "EVALUATE-TANK"))))
+Microservicios ML/LLM: Python / Flask
 
-(in-package "TANK-INTEGRITY")
+Estándares de Ingeniería: API 653, API 510, API 580, ASME B31.3.
 
-(ql:quickload :py4cl2)
-(py4cl2:python-start)
-(py4cl2:import-module "tank_integrity")
+🚀 Próximos Pasos (Hoja de Ruta)
+Integración Final: Implementar las correcciones del prompt y las reglas generadas en la base de conocimientos de producción.
 
-(make-inference-engine)
+Pruebas de Cierre: Realizar pruebas de regresión para asegurar que las reglas recién generadas no disparen falsos negativos o positivos.
 
-(deftemplate tank-risk ()
-  (slot risk)
-  (slot confidence)
-  (slot thickness))
-
-(defun calculate_minimum_thickness (height diameter specific_gravity)
-  (/ (* 2.6 height diameter specific_gravity) (* 24800 1.0)))
-
-(defrule low-risk ()
-  (tank-risk (risk ?r) (confidence ?c) (thickness ?t))
-  (test (string= ?r "low"))
-  (test (> ?c 0.7))
-  (test (> ?t (calculate_minimum_thickness 40 100 0.85)))
-  =>
-  (format t "Low risk. Continue normal operation. External inspection every 5 years (API 653, Section 6.4.2).~%"))
-
-(defrule medium-risk-inspection ()
-  (tank-risk (risk ?r) (confidence ?c) (thickness ?t))
-  (test (string= ?r "medium"))
-  (test (> ?c 0.7))
-  (test (> ?t (calculate_minimum_thickness 40 100 0.85)))
-  =>
-  (format t "Medium risk. Schedule visual and ultrasonic inspection within 6 months (API 653, Annex F - RBI).~%"))
-
-(defrule medium-risk-critical-thickness ()
-  (tank-risk (risk ?r) (confidence ?c) (thickness ?t))
-  (test (string= ?r "medium"))
-  (test (> ?c 0.7))
-  (test (<= ?t (calculate_minimum_thickness 40 100 0.85)))
-  =>
-  (format t "Medium risk, critical thickness. Schedule immediate internal inspection (API 653, Section 4.3).~%"))
-
-(defrule high-risk ()
-  (tank-risk (risk ?r) (confidence ?c) (thickness ?t))
-  (test (string= ?r "high"))
-  (test (> ?c 0.7))
-  =>
-  (format t "High risk. Suspend operation and repair immediately (API 653, Section 9.2).~%"))
-
-(defun evaluate-tank (thickness temperature years fluid_type pressure coating cathodic_protection)
-  (reset)
-  (let ((result (py4cl2:python-call "tank_integrity.predict_risk"
-                                    thickness temperature years fluid_type
-                                    pressure coating cathodic_protection)))
-    (assert (tank-risk (risk (gethash "risk" result))
-                       (confidence (gethash "confidence" result))
-                       (thickness (gethash "thickness" result))))
-    (run)))
-
-;; Ejemplo
-(evaluate-tank 8.0 60 10 1 20 0 0)
-#+END_SRC
-
-** Beneficios
-
-- *Seguridad*: Predice riesgos y sugiere medidas preventivas.
-- *Cumplimiento normativo*: Alineado con API 653.
-- *Eficiencia*: Automatiza la evaluación, reduciendo costos de inspección.
-- *Escalabilidad*: Adaptable a nuevos datos y equipos.
-
-** Conclusión
-
-Este sistema demuestra el potencial de la IA neurosimbólica para resolver problemas críticos en la industria del petróleo. Planeo extenderlo a otros equipos estáticos o integrarlo con datos en tiempo real.
-
-¿Te interesa colaborar en desarrollos similares?
-
-*Conéctate conmigo en LinkedIn para conversar sobre el futuro de la IA en ingeniería.*
-
-#+BEGIN_QUOTE
-#IA #Petróleo #API653 #Neurosimbólico #Ingeniería
-#+END_QUOTE
-
+Monitoreo del LLM: Implementar un registro detallado de las reglas generadas por el LLM para auditoría continua y refinamiento del prompt.
