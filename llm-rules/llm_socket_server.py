@@ -1,0 +1,156 @@
+import socket
+import json
+import textwrap
+import os
+import sys
+from google import genai
+from google.genai import types
+
+# --- 1. CONFIGURACIÓN Y CHEQUEOS BÁSICOS ---
+
+HOST = "127.0.0.1"
+PORT = 5002
+
+# Chequeo de clave API y cliente Gemini
+if not os.getenv("GEMINI_API_KEY"):
+    print("Error: La variable de entorno GEMINI_API_KEY no está configurada.")
+    sys.exit(1)
+
+try:
+    CLIENT = genai.Client()
+except Exception as e:
+    print(f"Error al inicializar el cliente Gemini: {e}")
+    sys.exit(1)
+
+# ====================================================================
+# 2. DEFINICIÓN DE INSTRUCCIONES ESTÁTICAS (La Ingeniería de Contexto)
+# ====================================================================
+
+SYSTEM_INSTRUCTION = textwrap.dedent("""
+    Eres un Ingeniero Experto en Integridad Mecánica y programador Senior de reglas LISA (LISP). 
+    Tu FUNCIÓN ES CREAR CONOCIMIENTO e INFERIR la 'accion' y la 'norma' faltante.
+    
+    REGLAS CRÍTICAS DE SINTAXIS (CUMPLIMIENTO OBLIGATORIO):
+    1. La regla debe incluir los paréntesis vacíos '()' inmediatamente después del nombre. 
+    2. El patrón de hecho DEBE ser: (tank-risk (riesgo ?r) (confianza ?c) (espesor ?e)) -- ¡PROHIBIDO USAR ?f <-!
+    3. Para la cláusula (test), debes usar operadores de desigualdad (<, >) o (>=, <=) para generalizar las condiciones numéricas (confianza y espesor), creando una regla con rango lógico.
+    4. Usa la función '(string=)' para comparar cadenas.
+    5. La salida DEBE cumplir el FORMATO ESTÁNDAR:
+       a) **(format t "Mensaje descriptivo (Norma de Referencia).~%" ?r ?c ?e)** (Usando las variables capturadas).
+       b) **(assert (conclusion-found (source "NORMA-CATEGORIA")))** inmediatamente después.
+
+    TAREA CRÍTICA PARA EL SOURCE:
+    La etiqueta de origen (source) DEBE ser una combinación de la NORMA inferida (ej: API-510) y la CATEGORÍA o RIESGO (ej: ALTA-CORR).
+    
+    ESTRUCTURA DE SALIDA REQUERIDA (OBLIGATORIO):
+    (defrule NOMBRE-DE-REGLA ()
+        (tank-risk (riesgo ?r) (confianza ?c) (espesor ?e))
+        (test (string= ?r "SUSTITUIR_RIESGO"))
+        (test (OPERADOR ?c VALOR_C))
+        (test (OPERADOR ?e VALOR_E))
+    =>
+        (format t "Acción inferida para el riesgo %a, confianza %a y espesor %a (NORMA).~%" ?r ?c ?e)
+        (assert (conclusion-found (source "API-510-BAJA-CONF"))) <-- ¡EJEMPLO DE NORMA-CATEGORIA!
+    )
+
+    PROHIBIDO: No uses JSON, ni markdown, ni explicaciones, ni texto adicional.
+""")
+
+# ====================================================================
+# 3. FUNCIÓN PRINCIPAL DE LLAMADA AL LLM
+# ====================================================================
+
+def generate_lisa_rule(data):
+    """
+    Recibe el contexto completo del fallo (JSON deserializado) y llama a la API de Gemini.
+    """
+    try:
+        if 'eval_input' not in data or 'fallos_output' not in data:
+            return {"error": "JSON de entrada incompleto. Faltan 'eval_input' o 'fallos_output'."}
+
+        # Extracción de datos
+        EVAL_INPUT = data["eval_input"]
+        FALLOS_OUTPUT = data["fallos_output"]
+        
+        RIESGO_F = FALLOS_OUTPUT["riesgo"].lower()
+        CONFIANZA_F = FALLOS_OUTPUT["confianza"]
+        ESPESOR_F = FALLOS_OUTPUT["espesor"]
+        
+        RULE_NAME = f"inferencia-api-V{RIESGO_F}-{str(ESPESOR_F).replace('.', '_')}"
+
+        # Creación del PROMPT DINÁMICO
+        EVAL_TANQUE_CALL = f"(evaluar-tanque {EVAL_INPUT[0]} {EVAL_INPUT[1]} {EVAL_INPUT[2]} {EVAL_INPUT[3]} {EVAL_INPUT[4]} {EVAL_INPUT[5]} {EVAL_INPUT[6]} \"{EVAL_INPUT[7]}\" \"{EVAL_INPUT[8]}\" \"{EVAL_INPUT[9]}\" \"{EVAL_INPUT[10]}\" {EVAL_INPUT[11]})"
+
+        PROMPT_LISA = textwrap.dedent(f"""
+            Genera la 'defrule' LISA para cubrir un VACÍO DE CONOCIMIENTO.
+
+            CONTEXTO DE EVALUACIÓN COMPLETO (INPUTS REALES):
+            {EVAL_TANQUE_CALL}
+            
+            HECHOS SIN COBERTURA (OUTPUT de los modelos que fallan):
+            - Nombre de la Regla: {RULE_NAME}
+            - Hechos de Entrada: {{'riesgo': '{RIESGO_F}', 'confianza': {CONFIANZA_F}, 'espesor': {ESPESOR_F}}}
+
+            TAREA CRÍTICA (INFERENCIA):
+            Analiza este CONTEXTO COMPLETO. 
+            1. DETERMINA la acción y la norma.
+            2. CODIFICA la conclusión usando ÚNICAMENTE (format t "Tu Acción (Tu Norma).~%").
+            3. El patrón de hecho DEBE ser (tank-risk (riesgo ?r) (confianza ?c) (espesor ?e)).
+        """)
+
+        # LLAMADA AL MODELO GEMINI
+        config = types.GenerateContentConfig(
+            system_instruction=SYSTEM_INSTRUCTION,
+        )
+
+        response = CLIENT.models.generate_content(
+            model='gemini-2.5-pro',
+            contents=PROMPT_LISA,
+            config=config
+        )
+        
+        regla_limpia = response.text.strip().replace("```lisp\n", "").replace("\n```", "")
+        
+        return {
+            "status": "success",
+            "rule_name": RULE_NAME,
+            "lisa_rule": regla_limpia
+        }
+
+    except Exception as e:
+        # Devolver un error JSON claro si falla la llamada o el parsing
+        return {"status": "error", "message": f"Fallo en la inferencia LLM o API: {str(e)}"}
+
+# ====================================================================
+# 4. SERVIDOR SOCKET (COPIA DE LA ESTRUCTURA DE TU MODELO DE RIESGO)
+# ====================================================================
+
+def start_server(host=HOST, port=PORT):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # Reutilizar el socket para evitar errores después de un cierre abrupto
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((host, port))
+        s.listen()
+        print(f"🤖 Servidor de Inferencias LLM activo en {host}:{port}")
+        
+        while True:
+            conn, addr = s.accept()
+            with conn:
+                print(f"Conexión de inferencia desde {addr}")
+                data_received = conn.recv(4096).decode() # Aumentado a 4KB para asegurar que el JSON completo entre
+
+                result = {}
+                try:
+                    # El cliente debe enviar el JSON completo, incluyendo eval_input y fallos_output
+                    parsed_data = json.loads(data_received)
+                    result = generate_lisa_rule(parsed_data)
+                except json.JSONDecodeError:
+                    result = {"status": "error", "message": "JSON inválido recibido."}
+                except Exception as e:
+                    result = {"status": "error", "message": f"Error al procesar la data: {str(e)}"}
+
+                # Enviar el resultado serializado de vuelta al cliente (añadiendo salto de línea)
+                conn.sendall((json.dumps(result) + "\n").encode())
+
+if __name__ == "__main__":
+    start_server()

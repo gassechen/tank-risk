@@ -1,0 +1,15 @@
+﻿Environment	The material surrounding the sample being observed. The environment may, or may not, act as a corrosive.
+Material Group	The base element or predominant constituent of a sample; the alloy class. For example, “Stainless steels,” “Copper and alloys” or “Miscellaneous”.
+Material Family	A further narrowing of a Material Group. For example, “Austenitic,” “Tin brass” or “Nobel metals”.
+Material	The actual composition of the sample. This may be stated in words or by giving an alloy, or composition, designation. For example, “316LN,” “Naval brass” or “Silver”.
+Rate (mm/yr) or Rating	If corrosion was observed, the amount either as millimeters per year or using the following values: A (Resistant) < 0.002 inches/year; B (Good) < 0.020 inches/year; C (Questionable) 0.020 - 0.050 inches/year; D (Poor) > 0.050 inches/year.
+Rate (mils/yr) or Rating	If corrosion was observed, the amount either as 1000th of an inch per year or using the following values: A (Resistant) < 0.002 inches/year; B (Good) < 0.020 inches/year; C (Questionable) 0.020 - 0.050 inches/year; D (Poor) > 0.050 inches/year.
+Localized Attack	Description of the type of corrosion. Example values include, “Pitting,” “Weld attack” and “Susceptible to pitting and stress-corrosion cracking.”
+UNS	The Unified Numbering System (UNS) provides a correlation of many numbering systems separately administered by societies, associations and producers of metals and alloys. For example, “S30453,” “C46400” or “P07010”. http://www.astm.org/Standards/E527.htm
+Condition/Comment	Text summarized from the original source giving additional information about the observation. Examples include, “pH 8.9,” “Aged 500 h at 760 C” and “Ocean depth: 2 to 2070 m (6.5 to 6800 ft)”.
+Concentration (Vol %)	Concentration of aqueous solution. Default unit is volume percent. Some values are given as g/L or weight percent (wt %), as indicated in the value. Values such as “Saturated,” “Concentrated,” “Anhydrous,” “Fused” or “All” also appear in this column. 
+Temperature (deg C)	Temperature, or temperature range, for observations in Celsius. “Boiling” implies the temperature was the boiling point of the material listed in the “Environment” column. “Room” indicates the ambient temperature of the laboratory where the reading was taken.
+Temperature (deg F)	Temperature, or temperature range, for observations in Fahrenheit. “Boiling” implies the temperature was the boiling point of the material listed in the “Environment” column. “Room” indicates the ambient temperature of the laboratory where the reading was taken.
+Duration	Time span of observation (hr: hours, d: days, yr: years).
+Reference #	Number used to identify the reference.
+Reference	The citation of the reference.

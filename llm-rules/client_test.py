@@ -1,0 +1,19 @@
+import socket
+import json
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('127.0.0.1', 5002))
+
+payload = {
+    "eval_input": [8.0, 60, 10, 1, 20, 0, 0, "Acetic Acid", "Stainless steels", "Austenitic", "316", 90], 
+    "fallos_output": {"riesgo": "alto", "confianza": 0.95, "espesor": 3.1}
+}
+
+# Envía la carga JSON
+client_socket.sendall(json.dumps(payload).encode())
+
+# Recibe la respuesta
+response = client_socket.recv(4096).decode()
+print("Respuesta del servidor de LLM:\n", response)
+
+client_socket.close()

@@ -1,0 +1,17 @@
+CORR-DATA Database (https://doi.org/10.18434/M3TH4R)
+
+Corrosion is defined as the deterioration of a material due to chemical reactions with its environment. Understanding corrosion, and corrosion rates, is necessary to ensure that the design of objects we interact with every day, from the bridges we drive over to the containers used to transport chemicals, from the pipes that carry our water to the utensils we cook with, are safe and perform to specifications.
+
+The Corr-Data dataset was created by the staff of the NACE-NIST Corrosion Data Program. This program was established by a joint agreement between NACE (National Association of Corrosion Engineers) International and NIST (National Institute of Standards and Technology) in Dec. of 1982 and ran until 1997. At its founding, the objective of this program was to provide engineers with software for the then new personal computers that would help them solve corrosion problems.  Over the 15 years this program ran, over 20 databases and expert advisory systems for alloys selection were produced and released. While software can go out of date, the data remains relevant. The data describe observations of various samples in potentially corrosive environments under particular conditions (concentrations and temperatures) to see if, how, and at what rate they corrode.  The data include over 24,000 records which have been extracted from over 250 different source documents. 
+
+The data provided here is from published results, but it should only be considered indicative of how the specified material was observed to perform in the given environment one time. The user needs to keep in mind that corrosion is a highly stochastic process and that behavior can vary greatly with small variations in the environment or material. This data is provided to help users select materials for further evaluation and should not be considered, or construed, as advice on the usability of any material in any environment. Only thoroughly evaluated test results for the whole range of material, loading, and environmental conditions should be used for critical decision making.  
+
+If you find any discrepencies in this data, or you have new data that you would like to be considered for inclusion in this data set, please contact Dr. Richard Ricker (richard.ricker@nist.gov).
+
+The identification of any commercial product or trade name does not imply endorsement or recommendation by the authors, achivists, or NIST. 
+
+References: 
+
+L. H. Bennett, J. Kruger, R. L. Parker, E. Passaglia, C. Reimann, A. W. Ruff, H. Yakowitz and E. B. Berman, "Economic Effects of Metallic Corrosion in the United States Part 1: A Report to Congress by the National Bureau of Standards," Nat Bur Stds (U.S.), (1978). (https://archive.org/details/economiceffectso5111benn)
+
+C. P. Sturrock, “NACE-NIST Corrosion Data Program - The First 10 Years,” Mater. Perf. (11), 13-19 (1993).
