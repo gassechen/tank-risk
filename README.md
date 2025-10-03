@@ -1,71 +1,101 @@
-Sistema Experto Híbrido: Evaluación de Integridad de Tanques (Tank-Integrity AI)
-🎯 Descripción del Proyecto
-Tank-Integrity AI es un Sistema Experto Híbrido diseñado para la toma de decisiones en tiempo real sobre la integridad mecánica de tanques de almacenamiento y recipientes a presión en la industria de hidrocarburos y química. Este sistema combina la precisión de modelos de Machine Learning (ML) con la auditabilidad y rigurosidad de la lógica basada en reglas (Sistemas Expertos/IA Simbólica), implementando un mecanismo de "Rule Gap" (Vacío de Conocimiento) que garantiza la cobertura total de casos.
+# Sistema Experto de Integridad de Tanques con Aprendizaje Dinámico en la Industria del Petróleo
 
-El Problema que Resuelve
-Los sistemas de inspección tradicionales a menudo fallan en escenarios de baja confianza o datos contradictorios (casos de borde), donde la recomendación debe ir más allá de las normas estándar (API 653, API 510). Este proyecto asegura que cada caso de incertidumbre detectado por los modelos de ML sea resuelto mediante la generación dinámica de conocimiento utilizando un Large Language Model (LLM) como componente de inferencia de respaldo.
+En la industria del petróleo, garantizar la **integridad mecánica** de
+los tanques de almacenamiento es un imperativo de seguridad y normativo.
+Este proyecto presenta un ****Sistema Experto de Tercera Generación****
+que supera los sistemas basados en reglas estáticas. Su característica
+central es la capacidad de ****aprender y generar nuevas reglas de
+conocimiento**** de forma autónoma. Esto elimina los "puntos ciegos"
+operativos y garantiza la fiabilidad de las decisiones en los casos más
+ambiguos y complejos.
 
-🏗️ Arquitectura Neurosimbólica
-El proyecto está diseñado bajo una arquitectura de "cerebro dual" que orquesta tres componentes principales a través de Common Lisp/LISA:
+—
 
-1. Núcleo Simbólico (Motor de Reglas LISA)
-Tecnología: Common Lisp (CL) utilizando el shell de sistemas expertos LISA.
+# ¿Qué es un Sistema Experto con Aprendizaje Dinámico?
 
-Función: Almacena y ejecuta las reglas de decisión de ingeniería basadas en normas (API 653/510, ASME). Es el componente de auditoría y decisión primaria.
+Un sistema experto tradicional utiliza un conjunto fijo de reglas
+(simbólicas). Cuando se aplica la ****Inteligencia Artificial
+Híbrida****, la arquitectura se transforma en un ****mecanismo de
+autocorrección**** que integra tres capas funcionales:
 
-2. Componentes Neuro (Modelos de Machine Learning)
-Tecnología: Servidores Microservice (Python/Flask) que exponen endpoints (Puertos 5000, 5001).
+1.  ****Capa Neuronal (Modelos ML):**** Predice el riesgo de un activo
+    y, fundamentalmente, devuelve un nivel de ****Confianza
+    (**?****c**)**** en su predicción.
+2.  ****Capa Simbólica (Motor LISA):**** El motor de reglas basado en
+    normas (API 653, API 510) que es el ****árbitro de la decisión****.
+    Solo dispara una regla si la confianza es alta.
+3.  ****Conexión Dinámica (LLM - **Large Language Model**):**** Actúa
+    como **fallback** de inferencia. Si la confianza del ML es demasiado
+    baja, el sistema invoca al LLM para ****escribir una nueva regla
+    LISA**** que resuelva el caso, cerrando el vacío permanentemente.
 
-Función: Proporcionan hechos de entrada al sistema (LISA):
+****Esta arquitectura permite que el sistema experto aprenda, evolucione
+y se vuelva más robusto con cada escenario de incertidumbre que
+encuentra.****
 
-Modelo de Riesgo (Risk Model): Predice la categoría de riesgo ("alto", "medio", "bajo") y, crucialmente, la Confianza (?c) de esa predicción.
+—
 
-Modelo de Corrosión (Corrosion Model): Predice la agresividad de la corrosión.
+# Flujo Operacional: Gestión de la Incertidumbre (El Aprendizaje)
 
-3. Mecanismo de Inferencia Híbrida (El LLM)
-Tecnología: Servidor Microservice que aloja un Large Language Model (LLM) configurado con ingeniería de prompts.
+El proceso se centra en la ****gestión de la incertidumbre**** mediante
+el mecanismo de ****Rule Gap**** (Vacío de Conocimiento):
 
-Función: Es el mecanismo de fallback. Solo se activa si el motor LISA no puede asertar un CONCLUSION-FOUND debido a que la confianza de los modelos de ML es demasiado baja (el Rule Gap). El LLM genera y devuelve una nueva regla LISA, cerrando el vacío.
+|  |  |  |  |
+|----|----|----|----|
+| Escenario | Confianza ML (**?****c**) | Resultado en el Motor LISA | Conclusión |
+| :— | :— | :— | :— |
+| ****Caso Cubierto**** |  **\>** **0.6** (Alta) | Una regla API se dispara y aserta el hecho \`CONCLUSION-FOUND\`. | Decisión rápida y auditable. |
+| ****Caso Incierto (Rule Gap)**** |  **≤** **0.6** (Baja) | No se aserta \`CONCLUSION-FOUND\`. Se activa el **fallback**. | ****Se llama al LLM para generar una nueva \`defrule\`.**** |
 
-⚙️ Características Técnicas y Funcionalidad
-Flujo Operacional (Inferencia Híbrida)
-Activación: El frontend (LISA) recibe los inputs del tanque (evaluar-tanque ...).
+# Ejemplo de Salida (Proceso de Generación de Reglas)
 
-Consulta ML: LISA consulta los Modelos de ML para obtener los hechos TANK-RISK y CORROSION-FACT.
+Cuando un caso de borde (ej. Riesgo Alto con Confianza Baja **0.52**)
+genera el vacío:
 
-Evaluación Simbólica: LISA ejecuta sus reglas de ingeniería (?c>0.6).
+``` example
+--- 🧠 VACÍO DE CONOCIMIENTO DETECTADO. INFERENCIA NEUROSIMBÓLICA ---
 
-Detección de Vacío (Rule Gap):
+RULE GAP DETECTED: Llamando al Servicio de Inferencia LLM...
+✨ LLM Generó Regla: inspeccion-avanzada-scc-cloruros
 
-Si Confianza ML >0.6: Una regla estándar se dispara, aserta CONCLUSION-FOUND y se finaliza.
+Conclusión: Reevaluar riesgo con datos de alta confianza y técnicas NDT avanzadas para agrietamiento (API 581).
+(assert (conclusion-found (source "API-581-SCC-ALTO")))
+```
 
-Si Confianza ML ≤0.6 (Duda): El motor detecta la falta del hecho CONCLUSION-FOUND y suspende la ejecución.
+****Resultado:**** El sistema experto ha ****aprendido**** una nueva
+regla con formato estándar (\`API-581-SCC-ALTO\`), eliminando el punto
+ciego para futuras consultas.
 
-Generación de Conocimiento: Se llama al LLM con los hechos y inputs del tanque. El LLM infiere una solución (acción + norma) y genera una nueva defrule LISA.
+—
 
-Actualización: La nueva regla se integra en la base de conocimientos, resolviendo permanentemente el punto ciego para futuras consultas.
+# Beneficios Únicos del Sistema Avanzado
 
-Reglas Clave Generadas (Ejemplos de Vacíos Encontrados)
-El sistema ha demostrado capacidad para generar reglas para escenarios complejos y de baja confianza, como:
+- ****Cero Puntos Ciegos (Autosuficiencia):**** El sistema siempre
+  produce una conclusión. Si no tiene la regla, la genera y se
+  actualiza, asegurando que el conocimiento del sistema experto
+  ****nunca es estático****.
+- ****Auditabilidad Superior:**** Cada nueva regla generada por el LLM
+  se adhiere a un formato estandarizado y es etiquetada con la norma
+  técnica inferida (ej: \`API-580-BAJA-CONF\`), manteniendo la
+  trazabilidad.
+- ****Aprendizaje Continuo:**** El sistema se robustece con cada caso
+  resuelto, mejorando su rendimiento con cada ejecución.
+- ****Cumplimiento Normativo:**** Mantiene la alineación con los
+  estándares mientras aborda las áreas grises que un sistema tradicional
+  no podría manejar.
 
-API-580-BAJA-CONF: Riesgo Bajo, pero Confianza extremadamente baja (?c<0.4), requiriendo validación de datos (API 580).
+—
 
-API-510-ALTO-RIESGO-BAJA-CONF: Riesgo Alto, pero Confianza dudosa (?c=0.52), requiriendo re-inspección inmediata y recalcular el riesgo (API 510/580).
+# Conclusión
 
-API-581-SCC-ALTO: Alto Riesgo por Condición Metalúrgica (Cloruros/Temperatura), requiriendo técnicas avanzadas de NDT para agrietamiento (API 581).
+Este sistema demuestra el potencial de la ****IA Neurosimbólica
+Avanzada****, donde el sistema experto ****puede aprender a través de un
+LLM**** a generar y actualizar su propia base de conocimiento. Este
+avance no solo automatiza la evaluación de riesgos, sino que eleva la
+confiabilidad operativa al nivel de un ingeniero senior que siempre está
+aprendiendo de la experiencia.
 
-🛠️ Tecnologías Utilizadas
-Motor de Reglas: LISA (Lisp-based Intelligent Software Agent)
+**Conéctate conmigo en LinkedIn para conversar sobre el futuro de la IA
+en ingeniería.**
 
-Lenguaje Principal: Common Lisp
-
-Microservicios ML/LLM: Python / Flask
-
-Estándares de Ingeniería: API 653, API 510, API 580, ASME B31.3.
-
-🚀 Próximos Pasos (Hoja de Ruta)
-Integración Final: Implementar las correcciones del prompt y las reglas generadas en la base de conocimientos de producción.
-
-Pruebas de Cierre: Realizar pruebas de regresión para asegurar que las reglas recién generadas no disparen falsos negativos o positivos.
-
-Monitoreo del LLM: Implementar un registro detallado de las reglas generadas por el LLM para auditoría continua y refinamiento del prompt.
+> #IA #Petróleo #API653 #Neurosimbólico #LLM #Ingeniería #RuleGap
